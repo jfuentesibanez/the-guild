@@ -73,3 +73,46 @@ export interface Follow {
 export interface UserWithFollows extends User {
   follows: Follow[];
 }
+
+// Apprenticeship types
+export type SizingMode = 'match' | 'half' | 'fixed';
+
+export interface Apprenticeship {
+  id: string;
+  user_id: string;
+  master_id: string;
+  sizing_mode: SizingMode;
+  fixed_amount: number | null;
+  auto_copy: boolean;
+  active: boolean;
+  created_at: string;
+}
+
+export interface ApprenticeshipWithMaster extends Apprenticeship {
+  master: Master;
+}
+
+// Position types
+export type PositionSource = 'COPY' | 'OWN';
+export type PositionStatus = 'OPEN' | 'WON' | 'LOST';
+
+export interface Position {
+  id: string;
+  user_id: string;
+  bet_id: string | null;
+  master_id: string | null;
+  market_question: string;
+  side: 'YES' | 'NO';
+  entry_odds: number;
+  entry_amount: number;
+  entry_date: string;
+  current_odds: number | null;
+  status: PositionStatus;
+  return_amount: number | null;
+  source: PositionSource;
+  created_at: string;
+}
+
+export interface PositionWithMaster extends Position {
+  master: Master | null;
+}
