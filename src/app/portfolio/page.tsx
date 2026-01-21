@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/Card";
 import { Stat } from "@/components/ui/Stat";
 import { MasterCard } from "@/components/masters";
 import { PositionCard } from "@/components/portfolio";
+import { LevelBadge } from "@/components/journey";
+import { getXPProgress } from "@/lib/levels";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 
 export const revalidate = 60;
 
@@ -28,6 +31,9 @@ export default async function PortfolioPage() {
   const winRate = stats.totalPositions > 0
     ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1)
     : "0";
+
+  const xp = profile?.xp || 0;
+  const { currentLevel, nextLevel, progressPercent, xpToNext } = getXPProgress(xp);
 
   return (
     <main className="min-h-screen p-4 md:p-8">
@@ -57,15 +63,7 @@ export default async function PortfolioPage() {
             >
               VIRTUAL BANKROLL
             </h2>
-            <span
-              className="text-xs px-2 py-1 rounded"
-              style={{
-                backgroundColor: "var(--color-secondary)",
-                color: "var(--color-muted)",
-              }}
-            >
-              Level {profile?.level || 1}
-            </span>
+            <LevelBadge xp={xp} size="sm" />
           </div>
 
           <div className="text-center py-4">
@@ -82,6 +80,23 @@ export default async function PortfolioPage() {
               Starting balance: $10,000
             </p>
           </div>
+
+          {nextLevel && (
+            <div className="mt-4 mb-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs" style={{ color: "var(--color-muted)" }}>
+                  XP Progress
+                </span>
+                <span className="text-xs" style={{ color: "var(--color-accent)" }}>
+                  {xp} / {nextLevel.xpRequired} XP
+                </span>
+              </div>
+              <ProgressBar value={progressPercent} size="sm" />
+              <p className="text-xs mt-1" style={{ color: "var(--color-muted)" }}>
+                {xpToNext} XP to {nextLevel.title}
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-4 gap-4 pt-4" style={{ borderTop: "1px solid var(--color-secondary)" }}>
             <Stat label="XP" value={profile?.xp || 0} />
