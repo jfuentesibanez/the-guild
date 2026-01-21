@@ -4,9 +4,10 @@ import type { Bet } from "@/lib/types";
 
 interface BetCardProps {
   bet: Bet;
+  onCopy?: () => void;
 }
 
-export function BetCard({ bet }: BetCardProps) {
+export function BetCard({ bet, onCopy }: BetCardProps) {
   const statusVariant = bet.status === "WON"
     ? "success"
     : bet.status === "LOST"
@@ -56,10 +57,24 @@ export function BetCard({ bet }: BetCardProps) {
             )}
           </div>
         </div>
-        <Badge variant={statusVariant}>
-          {bet.status}
-          {pnlDisplay && ` ${pnlDisplay}`}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {onCopy && bet.status === "OPEN" && (
+            <button
+              onClick={onCopy}
+              className="px-3 py-1 rounded text-xs transition-opacity hover:opacity-80"
+              style={{
+                backgroundColor: "var(--color-primary)",
+                color: "var(--color-text)",
+              }}
+            >
+              Copy
+            </button>
+          )}
+          <Badge variant={statusVariant}>
+            {bet.status}
+            {pnlDisplay && ` ${pnlDisplay}`}
+          </Badge>
+        </div>
       </div>
 
       {bet.reasoning && (
