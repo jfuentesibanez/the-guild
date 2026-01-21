@@ -1,6 +1,11 @@
+// src/components/layout/Header.tsx
 import Link from "next/link";
+import { getUser } from "@/lib/supabase-server";
+import { logout } from "@/app/login/actions";
 
-export function Header() {
+export async function Header() {
+  const user = await getUser();
+
   return (
     <header
       className="sticky top-0 z-50 px-4 py-3"
@@ -36,20 +41,38 @@ export function Header() {
           >
             Masters
           </Link>
-          <span
-            className="text-sm cursor-not-allowed"
-            style={{ color: "var(--color-secondary)" }}
-            title="Coming soon"
-          >
-            Feed
-          </span>
-          <span
-            className="text-sm cursor-not-allowed"
-            style={{ color: "var(--color-secondary)" }}
-            title="Coming soon"
-          >
-            Portfolio
-          </span>
+
+          {user ? (
+            <>
+              <Link
+                href="/portfolio"
+                className="text-sm hover:opacity-80 transition-opacity"
+                style={{ color: "var(--color-muted)" }}
+              >
+                Portfolio
+              </Link>
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="text-sm hover:opacity-80 transition-opacity"
+                  style={{ color: "var(--color-muted)" }}
+                >
+                  Logout
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm px-3 py-1 rounded transition-opacity hover:opacity-80"
+              style={{
+                backgroundColor: "var(--color-primary)",
+                color: "var(--color-text)",
+              }}
+            >
+              Sign In
+            </Link>
+          )}
         </nav>
       </div>
     </header>
