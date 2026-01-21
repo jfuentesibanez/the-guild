@@ -3,7 +3,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
-import { getUserFollowCount } from "@/lib/queries";
+import { getUserFollowCount, awardXP } from "@/lib/queries";
 import { XP_AWARDS } from "@/lib/levels";
 
 export async function followMaster(masterId: string) {
@@ -27,18 +27,7 @@ export async function followMaster(masterId: string) {
   const followCount = await getUserFollowCount(user.id);
   if (followCount === 1) {
     // Award first follow XP bonus
-    const { data: profile } = await supabase
-      .from("users")
-      .select("xp")
-      .eq("id", user.id)
-      .single();
-
-    if (profile) {
-      await supabase
-        .from("users")
-        .update({ xp: profile.xp + XP_AWARDS.FIRST_FOLLOW })
-        .eq("id", user.id);
-    }
+    await awardXP(user.id, XP_AWARDS.FIRST_FOLLOW);
   }
 
   revalidatePath("/");

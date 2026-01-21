@@ -3,6 +3,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase-server";
+import { awardXP } from "@/lib/queries";
 import type { Bet } from "@/lib/types";
 
 export async function copyBet(bet: Bet, amount: number) {
@@ -57,18 +58,7 @@ export async function copyBet(bet: Bet, amount: number) {
   }
 
   // Award XP for copying bet
-  const { data: currentProfile } = await supabase
-    .from("users")
-    .select("xp")
-    .eq("id", user.id)
-    .single();
-
-  if (currentProfile) {
-    await supabase
-      .from("users")
-      .update({ xp: currentProfile.xp + 10 })
-      .eq("id", user.id);
-  }
+  await awardXP(user.id, 10);
 
   revalidatePath("/portfolio");
   return { success: true };
@@ -124,21 +114,21 @@ export async function closePosition(positionId: string, won: boolean) {
   // Update bankroll
   const { data: profile } = await supabase
     .from("users")
-    .select("virtual_bankroll, xp")
+    .select("virtual_bankroll")
     .eq("id", user.id)
     .single();
 
   if (profile) {
     const newBankroll = profile.virtual_bankroll + returnAmount;
-    const xpGain = won ? 25 : 5;
     await supabase
       .from("users")
-      .update({
-        virtual_bankroll: newBankroll,
-        xp: profile.xp + xpGain
-      })
+      .update({ virtual_bankroll: newBankroll })
       .eq("id", user.id);
   }
+
+  // Award XP based on outcome
+  const xpGain = won ? 25 : 5;
+  await awardXP(user.id, xpGain);
 
   revalidatePath("/portfolio");
   return { success: true, returnAmount };

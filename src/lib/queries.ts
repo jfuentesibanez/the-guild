@@ -1,5 +1,6 @@
 // src/lib/queries.ts
 import { supabase } from "./supabase";
+import { getLevelForXP } from "./levels";
 import type { MasterWithStats, Bet, SortOption, User, Follow, Apprenticeship, ApprenticeshipWithMaster, Position, PositionWithMaster } from "./types";
 
 export async function getMasters(options?: {
@@ -254,4 +255,28 @@ export async function getUserStats(userId: string): Promise<{
   }, { totalPositions: 0, openPositions: 0, wins: 0, losses: 0, totalReturn: 0 });
 
   return stats;
+}
+
+// XP and Level utilities
+export async function awardXP(userId: string, amount: number): Promise<{ newXP: number; leveledUp: boolean; newLevel: number }> {
+  const { data: profile } = await supabase
+    .from("users")
+    .select("xp, level")
+    .eq("id", userId)
+    .single();
+
+  if (!profile) {
+    return { newXP: 0, leveledUp: false, newLevel: 1 };
+  }
+
+  const newXP = profile.xp + amount;
+  const newLevelConfig = getLevelForXP(newXP);
+  const leveledUp = newLevelConfig.level > profile.level;
+
+  await supabase
+    .from("users")
+    .update({ xp: newXP, level: newLevelConfig.level })
+    .eq("id", userId);
+
+  return { newXP, leveledUp, newLevel: newLevelConfig.level };
 }
