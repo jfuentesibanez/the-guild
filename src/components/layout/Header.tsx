@@ -41,6 +41,13 @@ export async function Header() {
           >
             Masters
           </Link>
+          <Link
+            href="/feed"
+            className="text-sm hover:opacity-80 transition-opacity"
+            style={{ color: "var(--color-muted)" }}
+          >
+            Feed
+          </Link>
 
           {user ? (
             <>
