@@ -2,11 +2,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getMasterByUsername, getMasterBets, isFollowingMaster, getMasterFollowerCount } from "@/lib/queries";
-import { getUser } from "@/lib/supabase-server";
+import { getUser, getUserProfile } from "@/lib/supabase-server";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Stat } from "@/components/ui/Stat";
-import { BetCard } from "@/components/bets";
+import { BetListWithCopy } from "@/components/bets";
 import { FollowButton } from "@/components/masters";
 
 interface PageProps {
@@ -23,14 +23,16 @@ export default async function MasterProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const [bets, user, followerCount] = await Promise.all([
+  const [bets, user, followerCount, profile] = await Promise.all([
     getMasterBets(master.id, { limit: 10 }),
     getUser(),
     getMasterFollowerCount(master.id),
+    getUserProfile(),
   ]);
 
   const isFollowing = user ? await isFollowingMaster(user.id, master.id) : false;
   const stats = master.master_stats;
+  const userBankroll = profile?.virtual_bankroll ?? null;
 
   return (
     <main className="min-h-screen p-4 md:p-8">
@@ -143,11 +145,11 @@ export default async function MasterProfilePage({ params }: PageProps) {
               No bets yet.
             </p>
           ) : (
-            <div className="space-y-3">
-              {bets.map((bet) => (
-                <BetCard key={bet.id} bet={bet} />
-              ))}
-            </div>
+            <BetListWithCopy
+              bets={bets}
+              userBankroll={userBankroll}
+              isAuthenticated={!!user}
+            />
           )}
         </div>
       </div>
