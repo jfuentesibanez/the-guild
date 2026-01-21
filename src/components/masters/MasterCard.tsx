@@ -67,7 +67,7 @@ export function MasterCard({ master }: MasterCardProps) {
           ))}
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Stat
             label="Win Rate"
             value={stats?.win_rate ? `${stats.win_rate.toFixed(1)}%` : "—"}

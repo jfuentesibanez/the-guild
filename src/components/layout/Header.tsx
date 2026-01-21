@@ -33,7 +33,7 @@ export async function Header() {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-2 md:gap-4">
           <Link
             href="/"
             className="text-sm hover:opacity-80 transition-opacity"
@@ -60,7 +60,7 @@ export async function Header() {
               </Link>
               <Link
                 href="/journey"
-                className="text-sm hover:opacity-80 transition-opacity"
+                className="text-sm hover:opacity-80 transition-opacity hidden sm:inline"
                 style={{ color: "var(--color-muted)" }}
               >
                 Journey
