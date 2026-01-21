@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Apprentice under winning bettors. Learn how they think. Build your edge.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
