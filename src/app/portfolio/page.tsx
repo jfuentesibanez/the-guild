@@ -2,10 +2,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getUser, getUserProfile } from "@/lib/supabase-server";
-import { getFollowedMasters } from "@/lib/queries";
+import { getFollowedMasters, getUserPositions, getUserStats } from "@/lib/queries";
 import { Card } from "@/components/ui/Card";
 import { Stat } from "@/components/ui/Stat";
 import { MasterCard } from "@/components/masters";
+import { PositionCard } from "@/components/portfolio";
 
 export const revalidate = 60;
 
@@ -16,10 +17,17 @@ export default async function PortfolioPage() {
     redirect("/login");
   }
 
-  const [profile, followedMasters] = await Promise.all([
+  const [profile, followedMasters, openPositions, recentPositions, stats] = await Promise.all([
     getUserProfile(),
     getFollowedMasters(user.id),
+    getUserPositions(user.id, { status: 'OPEN' }),
+    getUserPositions(user.id, { limit: 10 }),
+    getUserStats(user.id),
   ]);
+
+  const winRate = stats.totalPositions > 0
+    ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1)
+    : "0";
 
   return (
     <main className="min-h-screen p-4 md:p-8">
@@ -36,7 +44,7 @@ export default async function PortfolioPage() {
             className="text-sm"
             style={{ color: "var(--color-muted)" }}
           >
-            Your portfolio and followed masters
+            Your portfolio and positions
           </p>
         </div>
 
@@ -75,12 +83,91 @@ export default async function PortfolioPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 pt-4" style={{ borderTop: "1px solid var(--color-secondary)" }}>
+          <div className="grid grid-cols-4 gap-4 pt-4" style={{ borderTop: "1px solid var(--color-secondary)" }}>
             <Stat label="XP" value={profile?.xp || 0} />
             <Stat label="Level" value={profile?.level || 1} />
             <Stat label="Following" value={followedMasters.length} />
+            <Stat label="Positions" value={stats.totalPositions} />
           </div>
         </Card>
+
+        {/* Performance Stats */}
+        {stats.totalPositions > 0 && (
+          <Card className="mb-8">
+            <h2
+              className="text-sm mb-4"
+              style={{ fontFamily: "var(--font-pixel)", color: "var(--color-accent)" }}
+            >
+              PERFORMANCE
+            </h2>
+            <div className="grid grid-cols-4 gap-4">
+              <Stat label="Win Rate" value={`${winRate}%`} />
+              <Stat label="Wins" value={stats.wins} variant="success" />
+              <Stat label="Losses" value={stats.losses} variant="danger" />
+              <Stat
+                label="Total Return"
+                value={`$${stats.totalReturn.toFixed(0)}`}
+                variant={stats.totalReturn >= 0 ? "success" : "danger"}
+              />
+            </div>
+          </Card>
+        )}
+
+        {/* Open Positions */}
+        <div className="mb-8">
+          <h2
+            className="text-sm mb-4"
+            style={{ fontFamily: "var(--font-pixel)", color: "var(--color-accent)" }}
+          >
+            OPEN POSITIONS ({openPositions.length})
+          </h2>
+
+          {openPositions.length === 0 ? (
+            <Card hover={false}>
+              <div className="text-center py-8">
+                <p className="text-sm mb-4" style={{ color: "var(--color-muted)" }}>
+                  No open positions. Copy a bet from a master to get started.
+                </p>
+                <Link
+                  href="/"
+                  className="inline-block px-4 py-2 rounded text-sm transition-opacity hover:opacity-80"
+                  style={{
+                    backgroundColor: "var(--color-primary)",
+                    color: "var(--color-text)",
+                  }}
+                >
+                  Browse Masters
+                </Link>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {openPositions.map((position) => (
+                <PositionCard key={position.id} position={position} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Closed Positions */}
+        {recentPositions.filter(p => p.status !== 'OPEN').length > 0 && (
+          <div className="mb-8">
+            <h2
+              className="text-sm mb-4"
+              style={{ fontFamily: "var(--font-pixel)", color: "var(--color-accent)" }}
+            >
+              RECENT CLOSED
+            </h2>
+            <div className="space-y-3">
+              {recentPositions
+                .filter(p => p.status !== 'OPEN')
+                .slice(0, 5)
+                .map((position) => (
+                  <PositionCard key={position.id} position={position} />
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Followed Masters */}
         <div className="mb-4">
@@ -117,21 +204,6 @@ export default async function PortfolioPage() {
             </div>
           )}
         </div>
-
-        {/* Coming Soon */}
-        <Card hover={false} className="mt-8">
-          <div className="text-center py-4">
-            <p
-              className="text-xs mb-2"
-              style={{ fontFamily: "var(--font-pixel)", color: "var(--color-accent)" }}
-            >
-              COMING SOON
-            </p>
-            <p className="text-sm" style={{ color: "var(--color-muted)" }}>
-              Copy trades, track positions, and build your track record
-            </p>
-          </div>
-        </Card>
       </div>
     </main>
   );
