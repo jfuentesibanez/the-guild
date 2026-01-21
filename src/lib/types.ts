@@ -53,3 +53,23 @@ export interface Bet {
 export type MarketCategory = 'politics' | 'crypto' | 'sports' | 'science' | 'culture' | 'other';
 
 export type SortOption = 'rank' | 'win_rate' | 'total_return' | 'current_streak';
+
+// User types
+export interface User {
+  id: string;
+  username: string;
+  virtual_bankroll: number;
+  level: number;
+  xp: number;
+  created_at: string;
+}
+
+export interface Follow {
+  user_id: string;
+  master_id: string;
+  created_at: string;
+}
+
+export interface UserWithFollows extends User {
+  follows: Follow[];
+}
