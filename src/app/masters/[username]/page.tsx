@@ -1,10 +1,13 @@
+// src/app/masters/[username]/page.tsx
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getMasterByUsername, getMasterBets } from "@/lib/queries";
+import { getMasterByUsername, getMasterBets, isFollowingMaster, getMasterFollowerCount } from "@/lib/queries";
+import { getUser } from "@/lib/supabase-server";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Stat } from "@/components/ui/Stat";
 import { BetCard } from "@/components/bets";
+import { FollowButton } from "@/components/masters";
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -20,7 +23,13 @@ export default async function MasterProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const bets = await getMasterBets(master.id, { limit: 10 });
+  const [bets, user, followerCount] = await Promise.all([
+    getMasterBets(master.id, { limit: 10 }),
+    getUser(),
+    getMasterFollowerCount(master.id),
+  ]);
+
+  const isFollowing = user ? await isFollowingMaster(user.id, master.id) : false;
   const stats = master.master_stats;
 
   return (
@@ -62,11 +71,18 @@ export default async function MasterProfilePage({ params }: PageProps) {
               </div>
             </div>
 
-            {stats?.current_streak && Math.abs(stats.current_streak) >= 3 && (
-              <span className="text-2xl">
-                {"🔥".repeat(Math.min(Math.abs(stats.current_streak), 5))}
-              </span>
-            )}
+            <div className="flex items-center gap-4">
+              {stats?.current_streak && Math.abs(stats.current_streak) >= 3 && (
+                <span className="text-2xl">
+                  {"🔥".repeat(Math.min(Math.abs(stats.current_streak), 5))}
+                </span>
+              )}
+              <FollowButton
+                masterId={master.id}
+                isFollowing={isFollowing}
+                isAuthenticated={!!user}
+              />
+            </div>
           </div>
 
           {master.bio && (
@@ -93,11 +109,7 @@ export default async function MasterProfilePage({ params }: PageProps) {
               value={stats?.total_return ? `+${stats.total_return.toFixed(0)}%` : "—"}
               variant={stats?.total_return && stats.total_return > 0 ? "success" : "default"}
             />
-            <Stat
-              label="Avg Return"
-              value={stats?.avg_return ? `+${stats.avg_return.toFixed(1)}%` : "—"}
-              variant={stats?.avg_return && stats.avg_return > 0 ? "success" : "default"}
-            />
+            <Stat label="Followers" value={followerCount} />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
