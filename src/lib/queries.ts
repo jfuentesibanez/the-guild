@@ -148,6 +148,19 @@ export async function getMasterFollowerCount(masterId: string): Promise<number> 
   return count || 0;
 }
 
+export async function getUserFollowCount(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) {
+    return 0;
+  }
+
+  return count || 0;
+}
+
 // Apprenticeship queries
 export async function getUserApprenticeships(userId: string): Promise<ApprenticeshipWithMaster[]> {
   const { data, error } = await supabase
