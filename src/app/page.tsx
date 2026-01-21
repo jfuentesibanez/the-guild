@@ -1,10 +1,24 @@
+import { Suspense } from "react";
 import { getMasters } from "@/lib/queries";
-import { MasterCard } from "@/components/masters";
+import { MasterCard, LeaderboardFilters } from "@/components/masters";
+import type { SortOption } from "@/lib/types";
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 60;
 
-export default async function LeaderboardPage() {
-  const masters = await getMasters({ sort: "rank", limit: 20 });
+interface PageProps {
+  searchParams: Promise<{ sort?: string; category?: string }>;
+}
+
+export default async function LeaderboardPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const sort = (params.sort as SortOption) || "rank";
+  const category = params.category || "all";
+
+  const masters = await getMasters({
+    sort,
+    category: category === "all" ? undefined : category,
+    limit: 20
+  });
 
   return (
     <main className="min-h-screen p-4 md:p-8">
@@ -25,11 +39,16 @@ export default async function LeaderboardPage() {
           </p>
         </div>
 
+        {/* Filters */}
+        <Suspense fallback={null}>
+          <LeaderboardFilters />
+        </Suspense>
+
         {/* Masters List */}
         <div className="space-y-4">
           {masters.length === 0 ? (
             <p style={{ color: "var(--color-muted)" }} className="text-center py-8">
-              No masters found. Check your Supabase connection.
+              No masters found. Try different filters.
             </p>
           ) : (
             masters.map((master) => (
