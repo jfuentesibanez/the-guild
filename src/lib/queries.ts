@@ -1,6 +1,6 @@
 // src/lib/queries.ts
 import { supabase } from "./supabase";
-import type { MasterWithStats, Bet, SortOption } from "./types";
+import type { MasterWithStats, Bet, SortOption, User, Follow } from "./types";
 
 export async function getMasters(options?: {
   sort?: SortOption;
@@ -82,4 +82,68 @@ export async function getMasterBets(masterId: string, options?: {
   }
 
   return data as Bet[];
+}
+
+// User queries
+export async function getUserFollows(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("follows")
+    .select("master_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error fetching follows:", error);
+    return [];
+  }
+
+  return data.map((f) => f.master_id);
+}
+
+export async function isFollowingMaster(userId: string, masterId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("follows")
+    .select("master_id")
+    .eq("user_id", userId)
+    .eq("master_id", masterId)
+    .single();
+
+  if (error) {
+    return false;
+  }
+
+  return !!data;
+}
+
+export async function getFollowedMasters(userId: string): Promise<MasterWithStats[]> {
+  const { data, error } = await supabase
+    .from("follows")
+    .select(`
+      master:masters (
+        *,
+        master_stats (*)
+      )
+    `)
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error fetching followed masters:", error);
+    return [];
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return data.map((f: any) => f.master) as MasterWithStats[];
+}
+
+export async function getMasterFollowerCount(masterId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("follows")
+    .select("*", { count: "exact", head: true })
+    .eq("master_id", masterId);
+
+  if (error) {
+    console.error("Error fetching follower count:", error);
+    return 0;
+  }
+
+  return count || 0;
 }
