@@ -58,6 +58,13 @@ export async function Header() {
               >
                 Portfolio
               </Link>
+              <Link
+                href="/journey"
+                className="text-sm hover:opacity-80 transition-opacity"
+                style={{ color: "var(--color-muted)" }}
+              >
+                Journey
+              </Link>
               <form action={logout}>
                 <button
                   type="submit"
