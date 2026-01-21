@@ -1,50 +1,49 @@
-export default function Home() {
+import { getMasters } from "@/lib/queries";
+import { MasterCard } from "@/components/masters";
+
+export const revalidate = 60; // Revalidate every 60 seconds
+
+export default async function LeaderboardPage() {
+  const masters = await getMasters({ sort: "rank", limit: 20 });
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8">
-      <div className="text-center space-y-8">
-        <h1
-          className="text-2xl md:text-4xl"
-          style={{ fontFamily: 'var(--font-pixel)', color: 'var(--color-primary)' }}
-        >
-          THE GUILD
-        </h1>
-
-        <p
-          className="max-w-md text-sm md:text-base"
-          style={{ color: 'var(--color-muted)' }}
-        >
-          Apprentice under winning bettors.
-          <br />
-          Learn how they think.
-          <br />
-          Build your edge.
-        </p>
-
-        <div className="flex flex-col gap-4 mt-8">
-          <div
-            className="rounded-lg p-6 card-glow transition-all duration-200"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-secondary)'
-            }}
+    <main className="min-h-screen p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1
+            className="text-xl md:text-3xl mb-2"
+            style={{ fontFamily: "var(--font-pixel)", color: "var(--color-primary)" }}
           >
-            <p
-              className="text-xs mb-2"
-              style={{ fontFamily: 'var(--font-pixel)', color: 'var(--color-accent)' }}
-            >
-              COMING SOON
-            </p>
-            <p className="text-sm" style={{ color: 'var(--color-text)' }}>
-              Track records don&apos;t lie. Gurus do.
-            </p>
-          </div>
+            THE MASTERS
+          </h1>
+          <p
+            className="text-sm"
+            style={{ color: "var(--color-muted)" }}
+          >
+            Top predictors ranked by performance. Learn from the best.
+          </p>
         </div>
 
+        {/* Masters List */}
+        <div className="space-y-4">
+          {masters.length === 0 ? (
+            <p style={{ color: "var(--color-muted)" }} className="text-center py-8">
+              No masters found. Check your Supabase connection.
+            </p>
+          ) : (
+            masters.map((master) => (
+              <MasterCard key={master.id} master={master} />
+            ))
+          )}
+        </div>
+
+        {/* Footer tagline */}
         <p
-          className="text-xs mt-12"
-          style={{ color: 'var(--color-muted)' }}
+          className="text-center text-xs mt-12"
+          style={{ color: "var(--color-muted)" }}
         >
-          &quot;The house always wins. Join the house.&quot;
+          &quot;Track records don&apos;t lie. Gurus do.&quot;
         </p>
       </div>
     </main>
