@@ -2,18 +2,25 @@
 import { supabase } from "@/lib/supabase";
 import { FeedItem } from "@/components/feed";
 import type { Bet, Master } from "@/lib/types";
+import Link from "next/link";
 
 export const revalidate = 30;
 
-async function getRecentBets(): Promise<(Bet & { master: Master })[]> {
-  const { data, error } = await supabase
+async function getBets(activeOnly: boolean): Promise<(Bet & { master: Master })[]> {
+  let query = supabase
     .from("bets")
     .select(`
       *,
       master:masters (*)
-    `)
-    .order("created_at", { ascending: false })
-    .limit(20);
+    `);
+
+  if (activeOnly) {
+    query = query.eq("status", "OPEN");
+  }
+
+  const { data, error } = await query
+    .order("entry_date", { ascending: false })
+    .limit(30);
 
   if (error) {
     console.error("Error fetching feed:", error);
@@ -35,14 +42,21 @@ function getTimeAgo(dateString: string): string {
   return `${Math.floor(seconds / 86400)}d ago`;
 }
 
-export default async function FeedPage() {
-  const bets = await getRecentBets();
+interface FeedPageProps {
+  searchParams: Promise<{ filter?: string }>;
+}
+
+export default async function FeedPage({ searchParams }: FeedPageProps) {
+  const params = await searchParams;
+  const filter = params.filter || "active";
+  const activeOnly = filter === "active";
+  const bets = await getBets(activeOnly);
 
   return (
     <main className="min-h-screen p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h1
               className="text-xl md:text-3xl"
@@ -61,19 +75,45 @@ export default async function FeedPage() {
             className="text-sm"
             style={{ color: "var(--color-muted)" }}
           >
-            Real-time activity from the masters
+            {activeOnly ? "Active bets you can copy now" : "All activity from the masters"}
           </p>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex justify-center gap-2 mb-6">
+          <Link
+            href="/feed?filter=active"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: activeOnly ? "var(--color-primary)" : "var(--color-surface)",
+              color: activeOnly ? "var(--color-bg)" : "var(--color-muted)",
+              border: `1px solid ${activeOnly ? "var(--color-primary)" : "var(--color-border)"}`,
+            }}
+          >
+            Active Bets
+          </Link>
+          <Link
+            href="/feed?filter=all"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: !activeOnly ? "var(--color-primary)" : "var(--color-surface)",
+              color: !activeOnly ? "var(--color-bg)" : "var(--color-muted)",
+              border: `1px solid ${!activeOnly ? "var(--color-primary)" : "var(--color-border)"}`,
+            }}
+          >
+            All History
+          </Link>
         </div>
 
         {/* Feed */}
         <div className="space-y-4">
           {bets.length === 0 ? (
             <p style={{ color: "var(--color-muted)" }} className="text-center py-8">
-              No activity yet. Check back soon.
+              {activeOnly ? "No active bets right now." : "No activity yet. Check back soon."}
             </p>
           ) : (
             bets.map((bet) => (
-              <FeedItem key={bet.id} bet={bet} timeAgo={getTimeAgo(bet.created_at)} />
+              <FeedItem key={bet.id} bet={bet} timeAgo={getTimeAgo(bet.entry_date)} />
             ))
           )}
         </div>
