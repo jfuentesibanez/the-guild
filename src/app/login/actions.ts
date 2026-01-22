@@ -30,31 +30,17 @@ export async function signup(formData: FormData) {
   const password = formData.get("password") as string;
   const username = formData.get("username") as string;
 
-  // First, sign up the user
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  // Sign up with username in metadata - trigger creates user profile automatically
+  const { error: authError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: { username },
+    },
   });
 
   if (authError) {
     return { error: authError.message };
-  }
-
-  if (!authData.user) {
-    return { error: "Failed to create user" };
-  }
-
-  // Then create the user profile
-  const { error: profileError } = await supabase.from("users").insert({
-    id: authData.user.id,
-    username,
-    virtual_bankroll: 10000,
-    level: 1,
-    xp: 0,
-  });
-
-  if (profileError) {
-    return { error: profileError.message };
   }
 
   revalidatePath("/", "layout");
